@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sk.eadmin.biz.mapper.CustomerProblemMapper">
+	<select id="getCustomerProblemRegistList" 
+			parameterType="CustomerProblemRegistMapperInputDTO" resultType="CustomerProblemRegistMapperOutputDTO">
+		/* CustomerProblemMapper.getCustomerProblemRegistList */
+		SELECT  
+			A.reg_id 
+			, MAX(A.cust_nm) as cust_nm
+			, MAX(A.crte_dttm) as crte_dttm
+			, GROUP_CONCAT(C.agnt_icn ORDER BY C.agnt_id SEPARATOR ', ') as agnt_icn
+			, MAX(A.prbm_dgr) as prbm_dgr
+			, MAX(D.cd_val) as prgs_sts
+		FROM reg_cust_prbm A
+		LEFT OUTER JOIN prbm_reg_agnt_mpp B on A.reg_id = B.reg_id 
+		LEFT OUTER JOIN prbm_cust_agnt C on B.agnt_id = C.agnt_id  
+		LEFT OUTER JOIN cmn_cd_dtl D on D.ctg_cd = 'sts-cd' AND A.prgs_sts = D.cmn_cd
+		<where>
+			<if test="problemCode != null and problemCode != ''">
+				AND A.prbm_cd = #{problemCode}
+			</if>
+			<if test="agentRegionCode != null and agentRegionCode != ''">
+				AND C.agnt_regn_cd = #{agentRegionCode}
+			</if>
+			<if test="progressStatusCode != null and progressStatusCode != ''">
+				AND A.prgs_sts = #{progressStatusCode}
+			</if>
+			<if test="requestDesc != null and requestDesc != ''">
+				AND A.req_desc LIKE CONCAT('%', #{requestDesc}, '%')
+			</if>
+		</where>
+		GROUP BY A.reg_id;
+	</select>
+	<select id="getCustomerProblemRegistDetail" parameterType="int" resultType="CustomerProblemRegistMapperOutputDTO">
+		SELECT /* CustomerProblemMapper.getCustomerProblemRegistDetail */
+			A.cust_nm 
+			, A.req_desc 
+			, A.cust_mbl 
+			, A.prgs_sts
+			, D1.cd_val as prgs_sts_val
+			, A.crte_dttm 
+			, A.prbm_cd
+			, D2.cd_val as cust_prbm
+			, A.prbm_dgr 
+		FROM reg_cust_prbm A
+		LEFT OUTER JOIN cmn_cd_dtl D1 on D1.ctg_cd = 'sts-cd' AND A.prgs_sts = D1.cmn_cd
+		LEFT OUTER JOIN cmn_cd_dtl D2 on D2.ctg_cd = 'prbm-cd' AND A.prbm_cd = D2.cmn_cd
+		WHERE 
+			A.reg_id = #{registID}
+	</select>
+	
+	<select id="getCustomerProblemMappingAgentList" 
+			parameterType="int" resultType="CustomerProblemMappingAgentMapperOutputDTO">
+		SELECT  /* CustomerProblemMapper.getCustomerProblemMappingAgentList */
+			C.agnt_nm
+			, C.agnt_regn_cd 
+			, D.cd_val as agent_regn_val
+		FROM prbm_reg_agnt_mpp B
+		LEFT OUTER JOIN prbm_cust_agnt C on B.agnt_id = C.agnt_id  
+		LEFT OUTER JOIN cmn_cd_dtl D on D.ctg_cd = 'regn-cd' AND C.agnt_regn_cd = D.cmn_cd
+		WHERE 
+			B.reg_id = #{registID}
+	</select>
+	
+	<insert id="addCustomerProblemRegist" parameterType="AddCustomerProblemRegistInputDTO">
+		INSERT INTO reg_cust_prbm
+			(cust_nm, cust_mbl, req_desc, prbm_cd, prbm_dgr, prgs_sts, crte_id, crte_dttm, updt_id, updt_dttm)
+		VALUES
+			(
+				#{customerName}
+				, #{customerMobile}
+				, #{requestDesc}
+				, #{problemCode}
+				, #{problemDegree}
+				, #{progressStatusCode}
+				, #{reqestID}
+				, CURRENT_TIMESTAMP
+				, #{reqestID}
+				, CURRENT_TIMESTAMP				
+			);
+	</insert>
+	
+	<update id="modifyCustomerProblemRegist" parameterType="ModifyCustomerProblemRegistInputDTO">
+		UPDATE reg_cust_prbm
+		<set>
+			<if test="customerName != null">	, cust_nm	=	#{customerName}</if>
+			<if test="customerMobile != null">	, cust_mbl	=	#{customerMobile}</if>
+			<if test="requestDesc != null">		, req_desc	=	#{requestDesc}</if>
+			<if test="problemCode != null">		, prbm_cd	=	#{problemCode}</if>
+			<if test="problemDegree != null">	, prbm_dgr	=	#{problemDegree}</if>
+			<if test="reqestID != null">		, updt_id	=	#{reqestID}</if>
+			, updt_dttm	=	CURRENT_TIMESTAMP
+		</set>
+		WHERE 
+			reg_id = #{registID}
+	</update>
+	
+	<delete id="deleteCustomerProblemRegist" parameterType="int">
+		DELETE FROM reg_cust_prbm 
+		WHERE 
+			reg_id = #{registID}
+	</delete>
+</mapper>
