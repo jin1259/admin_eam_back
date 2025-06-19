@@ -18,3 +18,7 @@ mybatis:
   type-aliases-package: com.sk.eadmin.biz.* 
   configuration:
     map-underscore-to-camel-case: true
+logging:
+  level:
+    root: DEBUG
+

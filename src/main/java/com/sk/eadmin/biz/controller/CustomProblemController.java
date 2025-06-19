@@ -88,7 +88,8 @@ public class CustomProblemController {
     )
     @RequestParam(name = "requestFilter", required = false)
     String requestFilter
-  ) {
+  ) /*
+  {
     final List<CustomerProblemRegistOutputDTO> serviceResults = customerProblemService.getCustomerProblemRegistList(
       CustomerProblemRegistInputDTO.builder()
         .problemCode(problemCode)
@@ -112,6 +113,36 @@ public class CustomProblemController {
 	   rets.add(retObject);
 	 }
 	 return new ResponseEntity<List<CustomerProblemRegistResDTO>>(rets, HttpStatus.OK);
+  }
+  */
+
+  /* 2025.06.29 Stream API 사용 */
+  {
+    return new ResponseEntity<List<CustomerProblemRegistResDTO>> (
+      customerProblemService.getCustomerProblemRegistList(
+      CustomerProblemRegistInputDTO.builder()
+        .problemCode(problemCode)
+        .agentRegionCode(agentRegionCode)
+        .progressStatusCode(progressStatusCode)
+        .requestDesc(requestFilter).build()
+      )
+      .stream()
+        .map(serviceResult ->
+          CustomerProblemRegistResDTO.builder()
+          .regId(serviceResult.getRegId())
+          .custNm(serviceResult.getCustNm())
+          .custMbl(serviceResult.getCustMbl())
+          .reqDesc(serviceResult.getReqDesc())
+          .prbmCd(serviceResult.getPrbmCd())
+          .prbmDgr(serviceResult.getPrbmDgr())
+          .prgsSts(serviceResult.getPrgsSts())
+          .prgsStsVal(serviceResult.getPrgsStsVal())
+          .crteDttm(serviceResult.getCrteDttm())
+          .agntIcn(serviceResult.getAgntIcn()).build())
+        .toList(),
+        HttpStatus.OK
+    );
+
   }
 
   @Operation(summary = "고객접수문의 상세 조회", description = "입력조건에 따라 접수된 고객 문의 상세 정보를 조회한다.")
